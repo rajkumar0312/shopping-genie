@@ -7,7 +7,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const PORT = Number(process.env.PORT ?? 8080);
+// Keep the backend port configurable. 8081 avoids conflicts with local Windows services.
+const PORT = Number(process.env.PORT ?? 8081);
+const HOST = process.env.HOST ?? "0.0.0.0";
 
 const searchSchema = z.object({
   query: z.string().trim().min(1),
@@ -116,6 +118,6 @@ app.post("/api/v1/search", (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Shopping Genie backend listening on http://localhost:${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`Shopping Genie backend listening on http://${HOST}:${PORT}`);
 });
