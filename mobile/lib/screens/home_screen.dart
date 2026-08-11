@@ -11,6 +11,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _controller = TextEditingController();
+  final _pincodeController = TextEditingController();
   final _service = SearchService();
   bool _loading = false;
   List<ComparisonResult> _results = [];
@@ -26,13 +27,23 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      final results = await _service.search(query);
+      final results = await _service.search(
+        query,
+        pincode: _pincodeController.text,
+      );
       setState(() => _results = results);
     } catch (e) {
       setState(() => _error = e.toString());
     } finally {
       setState(() => _loading = false);
     }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _pincodeController.dispose();
+    super.dispose();
   }
 
   @override
@@ -56,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 8),
             const Align(
               alignment: Alignment.centerLeft,
-              child: Text('📍 Location-aware comparison coming in the next sprint'),
+              child: Text('📍 Add your pincode for location-aware results'),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -70,6 +81,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: const Icon(Icons.arrow_forward),
                   onPressed: _search,
                 ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _pincodeController,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              decoration: InputDecoration(
+                hintText: 'Pincode (optional)',
+                prefixIcon: const Icon(Icons.location_on_outlined),
+                counterText: '',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
