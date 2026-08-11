@@ -4,7 +4,7 @@ import '../models/comparison_result.dart';
 
 class SearchService {
   // Android emulator -> host machine. Change for a physical phone.
-  static const String baseUrl = 'http://10.0.2.2:8080';
+  static const String baseUrl = 'http://10.0.2.2:8081';
 
   Future<List<ComparisonResult>> search(
     String query, {
