@@ -6,13 +6,17 @@ class SearchService {
   // Android emulator -> host machine. Change for a physical phone.
   static const String baseUrl = 'http://10.0.2.2:8080';
 
-  Future<List<ComparisonResult>> search(String query) async {
+  Future<List<ComparisonResult>> search(
+    String query, {
+    String? pincode,
+  }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/api/v1/search'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'query': query,
-        // Location will be wired in during the next sprint.
+        if (pincode != null && pincode.trim().isNotEmpty)
+          'pincode': pincode.trim(),
       }),
     );
 
