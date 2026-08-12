@@ -1,7 +1,8 @@
 import express from "express";
 import cors from "cors";
 import { z } from "zod";
-import type { ComparisonResult } from "./types.js";
+import { activeConnectors } from "./connectors/registry.js";
+import { normalizeQuery, toComparisonResult } from "./connectors/normalize.js";
 
 const app = express();
 app.use(cors());
@@ -38,10 +39,16 @@ app.get("/health", (_req, res) => {
 });
 
 app.get("/api/v1/platforms", (_req, res) => {
-  res.json({ platforms });
+  res.json({
+    platforms,
+    activeConnectors: activeConnectors.map((connector) => ({
+      id: connector.id,
+      name: connector.name,
+    })),
+  });
 });
 
-app.post("/api/v1/search", (req, res) => {
+app.post("/api/v1/search", async (req, res) => {
   const parsed = searchSchema.safeParse(req.body);
 
   if (!parsed.success) {
@@ -52,70 +59,39 @@ app.post("/api/v1/search", (req, res) => {
   }
 
   const { query, latitude, longitude, pincode } = parsed.data;
+  const normalizedQuery = normalizeQuery(query, { pincode, latitude, longitude });
 
-  // Sprint 1A mock data. Real connector results will replace this layer.
-  const now = new Date().toISOString();
+  try {
+    const connectorResults = await Promise.all(
+      activeConnectors.map(async (connector) => ({
+        connector,
+        products: await connector.search(normalizedQuery),
+      })),
+    );
 
-  const results: ComparisonResult[] = [
-    {
-      platform: "Flipkart",
-      platformType: "ECOMMERCE",
-      productTitle: query,
-      productUrl: "https://www.flipkart.com/",
-      price: 999,
-      mrp: 1199,
-      currency: "INR",
-      availability: "IN_STOCK",
-      deliveryText: "Tomorrow",
-      lastCheckedAt: now,
-    },
-    {
-      platform: "Amazon",
-      platformType: "ECOMMERCE",
-      productTitle: query,
-      productUrl: "https://www.amazon.in/",
-      price: 1029,
-      mrp: 1199,
-      currency: "INR",
-      availability: "IN_STOCK",
-      deliveryText: "Tomorrow",
-      lastCheckedAt: now,
-    },
-    {
-      platform: "Zepto",
-      platformType: "QUICK_COMMERCE",
-      productTitle: query,
-      productUrl: "https://www.zeptonow.com/",
-      price: 1049,
-      mrp: 1199,
-      currency: "INR",
-      availability: "IN_STOCK",
-      deliveryText: "12 mins",
-      lastCheckedAt: now,
-    },
-    {
-      platform: "Blinkit",
-      platformType: "QUICK_COMMERCE",
-      productTitle: query,
-      productUrl: "https://blinkit.com/",
-      price: null,
-      mrp: null,
-      currency: "INR",
-      availability: "OUT_OF_STOCK",
-      deliveryText: null,
-      lastCheckedAt: now,
-    },
-  ];
+    const results = connectorResults.flatMap(({ connector, products }) =>
+      products.map((product) =>
+        toComparisonResult(connector.id, connector.name, product),
+      ),
+    );
 
-  res.json({
-    query,
-    location: { latitude, longitude, pincode },
-    results,
-    meta: {
-      source: "MOCK_SPRINT_1A",
-      note: "Replace mock results with authorized platform connectors after access verification.",
-    },
-  });
+    res.json({
+      query,
+      location: { latitude, longitude, pincode },
+      results,
+      meta: {
+        source: "CONNECTOR_LAYER_MOCK",
+        activeConnectors: activeConnectors.map((connector) => connector.id),
+        note: "Connector layer is active. Replace individual mock connectors only after authorized access is verified.",
+      },
+    });
+  } catch (error) {
+    console.error("Connector search failed", error);
+    res.status(502).json({
+      error: "CONNECTOR_SEARCH_FAILED",
+      message: "One or more shopping connectors failed while searching.",
+    });
+  }
 });
 
 app.listen(PORT, HOST, () => {
