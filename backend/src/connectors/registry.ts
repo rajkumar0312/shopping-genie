@@ -1,4 +1,4 @@
-import type { PlatformConnector } from "../../../connectors/common/connector.js";
+import type { PlatformConnector } from "./common/connector.js";
 import { MockPlatformConnector } from "./mock_connector.js";
 
 export const activeConnectors: PlatformConnector[] = [
