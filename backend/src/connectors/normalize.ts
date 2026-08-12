@@ -1,7 +1,7 @@
 import type {
   ConnectorProduct,
   NormalizedSearchQuery,
-} from "../../../connectors/common/connector.js";
+} from "./common/connector.js";
 import type { ComparisonResult, PlatformType } from "../types.js";
 
 const platformTypes: Record<string, PlatformType> = {
