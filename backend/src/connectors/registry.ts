@@ -1,6 +1,7 @@
 import type { PlatformConnector } from "./common/connector.js";
 import { MockPlatformConnector } from "./mock_connector.js";
 import { FlipkartConnector } from "./flipkart/connector.js";
+import { SerpApiShoppingConnector } from "./serpapi/connector.js";
 
 const mockConnectors: PlatformConnector[] = [
   new MockPlatformConnector("amazon", "Amazon", 1029, "IN_STOCK", "Tomorrow"),
@@ -10,14 +11,19 @@ const mockConnectors: PlatformConnector[] = [
 
 const flipkartAffiliateId = process.env.FLIPKART_AFFILIATE_ID?.trim();
 const flipkartAffiliateToken = process.env.FLIPKART_AFFILIATE_TOKEN?.trim();
+const serpApiKey = process.env.SERPAPI_API_KEY?.trim();
 
-export const activeConnectors: PlatformConnector[] =
+const serpApiConnectors: PlatformConnector[] = serpApiKey
+  ? [new SerpApiShoppingConnector(serpApiKey)]
+  : [];
+
+const flipkartConnectors: PlatformConnector[] =
   flipkartAffiliateId && flipkartAffiliateToken
-    ? [
-        new FlipkartConnector(flipkartAffiliateId, flipkartAffiliateToken),
-        ...mockConnectors,
-      ]
-    : [
-        new MockPlatformConnector("flipkart", "Flipkart", 999, "IN_STOCK", "Tomorrow"),
-        ...mockConnectors,
-      ];
+    ? [new FlipkartConnector(flipkartAffiliateId, flipkartAffiliateToken)]
+    : [new MockPlatformConnector("flipkart", "Flipkart", 999, "IN_STOCK", "Tomorrow")];
+
+export const activeConnectors: PlatformConnector[] = [
+  ...serpApiConnectors,
+  ...flipkartConnectors,
+  ...mockConnectors,
+];
