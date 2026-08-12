@@ -2,7 +2,7 @@ import type {
   ConnectorProduct,
   NormalizedSearchQuery,
   PlatformConnector,
-} from "../../../connectors/common/connector.js";
+} from "./common/connector.js";
 
 export class MockPlatformConnector implements PlatformConnector {
   constructor(
