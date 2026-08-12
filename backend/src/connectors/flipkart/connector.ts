@@ -13,6 +13,7 @@ interface FlipkartProductBaseInfo {
   imageUrls?: Record<string, string>;
   maximumRetailPrice?: { amount?: number; currency?: string };
   flipkartSellingPrice?: { amount?: number; currency?: string };
+  flipkartSpecialPrice?: { amount?: number; currency?: string };
   sellingPrice?: { amount?: number; currency?: string };
   productUrl?: string;
   productBrand?: string;
@@ -58,22 +59,32 @@ export class FlipkartConnector implements PlatformConnector {
 
     return (payload.productInfoList ?? [])
       .map((item) => item.productBaseInfoV1)
-      .filter((product): product is FlipkartProductBaseInfo => Boolean(product?.productId && product.title))
+      .filter(
+        (product): product is FlipkartProductBaseInfo =>
+          Boolean(product?.productId && product.title),
+      )
       .map((product) => {
-        const imageUrl = product.imageUrls?.["400x400"] ?? product.imageUrls?.unknown;
-        const price = product.flipkartSpecialPrice?.amount
-          ?? product.flipkartSellingPrice?.amount
-          ?? product.sellingPrice?.amount;
+        const imageUrl =
+          product.imageUrls?.["400x400"] ?? product.imageUrls?.unknown;
+        const price =
+          product.flipkartSpecialPrice?.amount ??
+          product.flipkartSellingPrice?.amount ??
+          product.sellingPrice?.amount;
 
         return {
           platformProductId: product.productId!,
           title: product.title!,
-          url: product.productUrl ?? `https://www.flipkart.com/search?q=${encodeURIComponent(query.raw)}`,
+          url:
+            product.productUrl ??
+            `https://www.flipkart.com/search?q=${encodeURIComponent(query.raw)}`,
           imageUrl,
           price,
           mrp: product.maximumRetailPrice?.amount,
           currency: "INR" as const,
-          availability: product.inStock === true ? "IN_STOCK" as const : "OUT_OF_STOCK" as const,
+          availability:
+            product.inStock === true
+              ? ("IN_STOCK" as const)
+              : ("OUT_OF_STOCK" as const),
           deliveryText: undefined,
           lastCheckedAt: now,
         };
