@@ -75,14 +75,20 @@ app.post("/api/v1/search", async (req, res) => {
       ),
     );
 
+    const hasLiveConnector = activeConnectors.some(
+      (connector) => connector.id === "google-shopping" || connector.id === "flipkart",
+    );
+
     res.json({
       query,
       location: { latitude, longitude, pincode },
       results,
       meta: {
-        source: "CONNECTOR_LAYER_MOCK",
+        source: hasLiveConnector ? "CONNECTOR_LAYER" : "CONNECTOR_LAYER_MOCK",
         activeConnectors: activeConnectors.map((connector) => connector.id),
-        note: "Connector layer is active. Replace individual mock connectors only after authorized access is verified.",
+        note: hasLiveConnector
+          ? "Results include data from configured live connectors and any remaining mock connectors."
+          : "Connector layer is active. Configure an authorized live connector to replace mock results.",
       },
     });
   } catch (error) {
